@@ -86,8 +86,7 @@ func authCodeHandler() http.Handler {
 
 func tokenHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		err := request.ParseForm()
-		if err != nil {
+		if err := request.ParseForm(); err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}

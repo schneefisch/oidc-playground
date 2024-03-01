@@ -21,6 +21,7 @@
         <span class="col-4 badge rounded-pill {{ if ge .Step 2}}text-bg-primary{{ else }}text-bg-light{{ end }}">Step 2</span>
         <span class="col-4 badge rounded-pill {{ if ge .Step 3}}text-bg-primary{{ else }}text-bg-light{{ end }}">Step 3</span>
     </div>
+
     {{ if eq .Step 1 }}
     <div class="row gy-3 mt-3">
         <div class="col-12">
@@ -34,21 +35,34 @@
         </div>
     </div>
     {{ end }}
+
     {{ if eq .Step 2 }}
     <div class="row gy-3 mt-3">
         <div class="col-12">
             <h4>Step 2: Verify state parameter</h4>
-            <div class="text-bg-light p-3 font-monospace">
+            <div class="text-bg-light p-3 font-monospace text-break">
                 State: {{ .State }}<br>
                 Code: {{ .Code }}
             </div>
 
-            <form action="/auth/code/token">
+            <form action="/auth/code/token" method="post">
                 <input type="hidden" name="session_token" value="{{ .SessionToken }}">
                 <input type="submit" class="btn btn-primary" value="Exchange for Token">
             </form>
         </div>
     </div>
     {{ end}}
+
+    {{ if eq .Step 3 }}
+    <div class="row gy-3 mt-3">
+        <div class="col-12">
+            <h4>Step 3: Use the Access Token</h4>
+            <div class="text-bg-light p-3 font-monospace text-break">
+                Access Token: {{ .TokenResponse }}
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
 </body>
 </html>

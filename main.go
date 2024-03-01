@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -24,7 +25,7 @@ func run() {
 	http.Handle("GET /", homeHandler())
 	http.Handle("POST /config", configHandler())
 	http.Handle("GET /auth/code", authCodeHandler())
-	http.Handle("GET /auth/code/token", tokenHandler())
+	http.Handle("POST /auth/code/token", tokenHandler())
 	http.Handle("GET /auth/pkce", pkceHandler())
 	http.Handle("GET /auth/implicit", implicitHandler())
 	http.Handle("GET /auth/device-code", deviceCodeHandler())
@@ -42,6 +43,8 @@ func main() {
 
 func homeHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		checkStartConfig()
+
 		configMutex.Lock()
 		tmplData := struct {
 			Configured bool
@@ -54,6 +57,24 @@ func homeHandler() http.Handler {
 
 		writeTemplate(writer, "html/index.html", tmplData)
 	})
+}
+
+func checkStartConfig() {
+	AuthURI := os.Getenv("AUTHORIZATION_URI")
+	TokenURI := os.Getenv("TOKEN_URI")
+	UserinfoURI := os.Getenv("USERINFO_URI")
+	ClientID := os.Getenv("CLIENT_ID")
+	ClientSecret := os.Getenv("CLIENT_SECRET")
+
+	if AuthURI != "" && TokenURI != "" && ClientID != "" && ClientSecret != "" {
+		configMutex.Lock()
+		config.AuthorizationURI = AuthURI
+		config.TokenURI = TokenURI
+		config.UserinfoURI = UserinfoURI
+		config.ClientID = ClientID
+		config.ClientSecret = ClientSecret
+		configMutex.Unlock()
+	}
 }
 
 func configHandler() http.Handler {
