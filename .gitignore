@@ -25,3 +25,6 @@ go.work
 
 # IDE
 /.idea/
+
+# secret files
+/secret.properties

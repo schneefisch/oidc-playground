@@ -23,11 +23,12 @@ var (
 func run() {
 	http.Handle("GET /", homeHandler())
 	http.Handle("POST /config", configHandler())
-	http.Handle("GET /auth-code", authCodeHandler())
-	http.Handle("GET /pkce", pkceHandler())
-	http.Handle("GET /implicit", implicitHandler())
-	http.Handle("GET /device-code", deviceCodeHandler())
-	http.Handle("GET /oidc", oidcHandler())
+	http.Handle("GET /auth/code", authCodeHandler())
+	http.Handle("GET /auth/code/token", tokenHandler())
+	http.Handle("GET /auth/pkce", pkceHandler())
+	http.Handle("GET /auth/implicit", implicitHandler())
+	http.Handle("GET /auth/device-code", deviceCodeHandler())
+	http.Handle("GET /auth/oidc", oidcHandler())
 
 	log.Println("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -51,7 +52,7 @@ func homeHandler() http.Handler {
 		}
 		configMutex.Unlock()
 
-		returnTemplate(writer, "html/index.html", tmplData)
+		writeTemplate(writer, "html/index.html", tmplData)
 	})
 }
 
@@ -71,12 +72,6 @@ func configHandler() http.Handler {
 
 		// redirect back to home-page after saving the configuration
 		http.Redirect(writer, request, "/", http.StatusSeeOther)
-	})
-}
-
-func authCodeHandler() http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		http.Error(writer, "Not implemented", http.StatusNotImplemented)
 	})
 }
 
@@ -104,7 +99,7 @@ func oidcHandler() http.Handler {
 	})
 }
 
-func returnTemplate(writer http.ResponseWriter, templatePath string, data any) {
+func writeTemplate(writer http.ResponseWriter, templatePath string, data any) {
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
