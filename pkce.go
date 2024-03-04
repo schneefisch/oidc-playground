@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 )
@@ -33,12 +31,13 @@ func pkceHandler() http.Handler {
 
 		// Build the authorization URL
 		configMutex.RLock()
-		authUrl := fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s&code_challenge_method=S256",
+		authUrl := fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s&code_challenge_method=%s",
 			config.AuthorizationURI,
 			url.QueryEscape(config.ClientID),
 			url.QueryEscape("http://localhost:8080/auth/pkce/callback"),
 			url.QueryEscape(state),
-			url.QueryEscape(codeChallenge))
+			url.QueryEscape(codeChallenge),
+			"S256")
 		configMutex.RUnlock()
 
 		// render the HTML template
@@ -142,7 +141,13 @@ func pkceTokenHandler() http.Handler {
 
 		case "3":
 			// exchange the authorization code for an access token
-			tokenBytes, token, err := exchangeAccessToken(clientID, "", session.Code, redirectUri, tokenURI, session.CodeVerifier)
+			tokenBytes, token, err := exchangeAccessToken(
+				clientID,
+				"",
+				session.Code,
+				redirectUri,
+				tokenURI,
+				session.CodeVerifier)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
@@ -176,54 +181,9 @@ func pkceTokenHandler() http.Handler {
 	})
 }
 
-func exchangeAccessToken(clientId string, clientSecret string, code string, redirectUri string, tokenURI string, codeVerifier string) ([]byte, *TokenResponse, error) {
-	data := url.Values{}
-	data.Set("grant_type", "authorization_code")
-	data.Set("client_id", clientId)
-	if clientSecret != "" {
-		// if clientSecret is provided, use the Authorization Code Grant
-		data.Set("client_secret", clientSecret)
-	} else {
-		// No client-secret means, we have the PKCE flow and must use a code-challenge
-		// ToDo: probably needs the code-challenge too.
-		data.Set("code_verifier", codeVerifier)
-	}
-	data.Set("code", code)
-	data.Set("redirect_uri", redirectUri)
-
-	req, err := http.NewRequest(http.MethodPost, tokenURI, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.PostForm = data
-
-	client := http.DefaultClient
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer resp.Body.Close()
-
-	tokenResponse, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("failed to exchange code for token: %s", tokenResponse)
-	}
-
-	var parsedToken TokenResponse
-	err = json.Unmarshal(tokenResponse, &parsedToken)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return tokenResponse, &parsedToken, nil
-}
-
+// generateCodeVerifier creates a random string according to RVC 7336 PKCE, section 4.1
+// https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+// To ensure that only ASCII-characters are used, we use a RawURLEncoding of the random string
 func generateCodeVerifier() (string, error) {
 	codeVerifier := make([]byte, 64)
 	_, err := rand.Read(codeVerifier)
@@ -233,6 +193,10 @@ func generateCodeVerifier() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(codeVerifier), nil
 }
 
+// generateCodeChallenge creates a code-challenge from the code-verifier according to RVC 7336 PKCE, section 4.2
+// https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+// if available, the code_verfier must use SHA256.
+// code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
 func generateCodeChallenge(codeVerifier string) (string, error) {
 	codeVerifierBytes := []byte(codeVerifier)
 	codeChallengeBytes := sha256.Sum256(codeVerifierBytes)

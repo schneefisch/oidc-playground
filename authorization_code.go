@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -72,15 +71,6 @@ func authCodeHandler() http.Handler {
 	})
 }
 
-type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	IDToken      string `json:"id_token,omitempty"`
-	Scope        string `json:"scope,omitempty"`
-}
-
 func tokenHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if err := request.ParseForm(); err != nil {
@@ -104,29 +94,16 @@ func tokenHandler() http.Handler {
 		clientSecret := config.ClientSecret
 		configMutex.RUnlock()
 
-		postData := url.Values{
-			"grant_type":    {"authorization_code"},
-			"code":          {session.Code},
-			"client_id":     {clientID},
-			"client_secret": {clientSecret},
-			"redirect_uri":  {"http://localhost:8080/auth/code"},
-		}
-
-		resp, err := http.PostForm(tokenURI, postData)
+		rawToken, parsedToken, err := exchangeAccessToken(clientID,
+			clientSecret,
+			session.Code,
+			"http://localhost:8080/auth/code",
+			tokenURI,
+			"")
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer resp.Body.Close()
-
-		// read the response body
-		tokenResponse, err := io.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		parsedToken, _ := parseTokenResponse(tokenResponse)
 
 		sessionsMutex.Lock()
 		session.IDToken = parsedToken.IDToken
@@ -142,21 +119,13 @@ func tokenHandler() http.Handler {
 			Token         *TokenResponse
 		}{
 			Step:          3,
-			TokenResponse: string(tokenResponse),
+			TokenResponse: string(rawToken),
 			SessionToken:  session.State,
 			Token:         parsedToken,
 		}
 
 		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
 	})
-}
-
-func parseTokenResponse(response []byte) (*TokenResponse, error) {
-	token := &TokenResponse{}
-	if err := json.Unmarshal(response, token); err != nil {
-		return nil, err
-	}
-	return token, nil
 }
 
 func userinfoHandler() http.Handler {
