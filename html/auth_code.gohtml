@@ -29,7 +29,7 @@
             <h4>Step 1: Redirect to the Authorization Server</h4>
             <p>Redirect the user to the authorization server. The user will be asked to log in and grant the client
                 access to the requested scopes.</p>
-            <div class="text-bg-light p-3 font-monospace">
+            <div class="text-bg-light p-3 font-monospace text-break">
                 {{ .AuthURL }}
             </div>
             <a href="{{ .AuthURL }}" class="btn btn-primary">Redirect to SSO-Login</a>
@@ -43,6 +43,7 @@
             <h4>Step 2: Verify state parameter</h4>
             <div class="text-bg-light p-3 font-monospace text-break">
                 State: {{ .State }}<br>
+                Nonce: {{ .Nonce }}<br>
                 Code: {{ .Code }}
             </div>
 

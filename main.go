@@ -14,6 +14,7 @@ type Config struct {
 	UserinfoURI      string
 	ClientID         string
 	ClientSecret     string
+	Scopes           string
 }
 
 var (
@@ -63,19 +64,25 @@ func homeHandler() http.Handler {
 }
 
 func checkStartConfig() {
-	AuthURI := os.Getenv("AUTHORIZATION_URI")
-	TokenURI := os.Getenv("TOKEN_URI")
-	UserinfoURI := os.Getenv("USERINFO_URI")
-	ClientID := os.Getenv("CLIENT_ID")
-	ClientSecret := os.Getenv("CLIENT_SECRET")
+	authURI := os.Getenv("AUTHORIZATION_URI")
+	tokenURI := os.Getenv("TOKEN_URI")
+	userinfoURI := os.Getenv("USERINFO_URI")
+	clientID := os.Getenv("CLIENT_ID")
+	clientSecret := os.Getenv("CLIENT_SECRET")
+	scopes := os.Getenv("SCOPES")
+	if scopes == "" {
+		// use some default-scopes
+		scopes = "openid profile email"
+	}
 
-	if AuthURI != "" && TokenURI != "" && ClientID != "" {
+	if authURI != "" && tokenURI != "" && clientID != "" {
 		configMutex.Lock()
-		config.AuthorizationURI = AuthURI
-		config.TokenURI = TokenURI
-		config.UserinfoURI = UserinfoURI
-		config.ClientID = ClientID
-		config.ClientSecret = ClientSecret
+		config.AuthorizationURI = authURI
+		config.TokenURI = tokenURI
+		config.UserinfoURI = userinfoURI
+		config.ClientID = clientID
+		config.ClientSecret = clientSecret
+		config.Scopes = scopes
 		configMutex.Unlock()
 	}
 }

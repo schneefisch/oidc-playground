@@ -13,18 +13,23 @@ func authCodeHandler() http.Handler {
 		if state == "" {
 			// start a new session
 			state = generateRandomString(16)
+			nonce := generateRandomString(20)
 
 			sessionsMutex.Lock()
-			sessions[state] = &AuthSession{State: state}
+			sessions[state] = &AuthSession{State: state, Nonce: nonce}
 			sessionsMutex.Unlock()
 
 			// Create authorization URL
 			configMutex.RLock()
-			authUrl := fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&state=%s",
-				config.AuthorizationURI,
-				url.QueryEscape(config.ClientID),
-				url.QueryEscape("http://localhost:8080/auth/code"),
-				url.QueryEscape(state))
+			queryParams := url.Values{
+				"response_type": {"code"},
+				"client_id":     {config.ClientID},
+				"redirect_uri":  {"http://localhost:8080/auth/code"},
+				"state":         {state},
+				"nonce":         {nonce},
+				"scope":         {config.Scopes},
+			}
+			authUrl := fmt.Sprintf("%s?%s", config.AuthorizationURI, queryParams.Encode())
 			configMutex.RUnlock()
 
 			tmplData := struct {
@@ -53,17 +58,19 @@ func authCodeHandler() http.Handler {
 		}
 
 		session.Code = request.URL.Query().Get("code")
+		gotNonce := request.URL.Query().Get("nonce")
 
 		tmplData := struct {
 			Step         int
 			Code         string
 			State        string
+			Nonce        string
 			SessionToken string
-			Exchange     bool
 		}{
 			Step:         2,
 			Code:         session.Code,
 			State:        state,
+			Nonce:        gotNonce,
 			SessionToken: session.State,
 		}
 

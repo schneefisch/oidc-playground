@@ -8,6 +8,7 @@ import (
 
 type AuthSession struct {
 	State        string
+	Nonce        string
 	Code         string
 	AccessToken  string
 	IDToken      string
