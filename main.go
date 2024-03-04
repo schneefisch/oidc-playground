@@ -52,8 +52,10 @@ func homeHandler() http.Handler {
 		configMutex.Lock()
 		tmplData := struct {
 			Configured bool
+			Title      string
 			Config     Config
 		}{
+			Title:      "OAuth 2.0 Playground",
 			Configured: config.ClientID != "" && config.ClientSecret != "",
 			Config:     config,
 		}
@@ -125,12 +127,13 @@ func oidcHandler() http.Handler {
 }
 
 func writeTemplate(writer http.ResponseWriter, templatePath string, data any) {
-	tmpl, err := template.ParseFiles(templatePath)
+	baseTmpl, err := template.ParseFiles("html/base.gohtml", templatePath)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = tmpl.Execute(writer, data)
+
+	err = baseTmpl.ExecuteTemplate(writer, "base", data)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return

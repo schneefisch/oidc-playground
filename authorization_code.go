@@ -7,6 +7,10 @@ import (
 	"net/url"
 )
 
+const (
+	authCodeTitle = "OAuth 2.0 Playground - Authorization Code Flow"
+)
+
 func authCodeHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		state := request.URL.Query().Get("state")
@@ -34,11 +38,13 @@ func authCodeHandler() http.Handler {
 
 			tmplData := struct {
 				Step          int
+				Title         string
 				AuthURL       string
 				SessionToken  string
 				Authorization bool
 			}{
 				Step:         1,
+				Title:        authCodeTitle,
 				AuthURL:      authUrl,
 				SessionToken: state,
 			}
@@ -62,12 +68,14 @@ func authCodeHandler() http.Handler {
 
 		tmplData := struct {
 			Step         int
+			Title        string
 			Code         string
 			State        string
 			Nonce        string
 			SessionToken string
 		}{
 			Step:         2,
+			Title:        authCodeTitle,
 			Code:         session.Code,
 			State:        state,
 			Nonce:        gotNonce,
@@ -121,11 +129,13 @@ func tokenHandler() http.Handler {
 		// display the token response
 		tmplData := struct {
 			Step          int
+			Title         string
 			TokenResponse string
 			SessionToken  string
 			Token         *TokenResponse
 		}{
 			Step:          3,
+			Title:         authCodeTitle,
 			TokenResponse: string(rawToken),
 			SessionToken:  session.State,
 			Token:         parsedToken,
@@ -181,10 +191,12 @@ func userinfoHandler() http.Handler {
 
 		tmplData := struct {
 			Step         int
+			Title        string
 			Userinfo     string
 			SessionToken string
 		}{
 			Step:         4,
+			Title:        authCodeTitle,
 			Userinfo:     string(userinfo),
 			SessionToken: session.State,
 		}

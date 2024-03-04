@@ -11,6 +11,7 @@ import (
 
 const (
 	codeVerifierLength = 44
+	pkceTitle          = "OAuth 2.0 Playground - PKCE Flow"
 )
 
 func pkceHandler() http.Handler {
@@ -46,10 +47,12 @@ func pkceHandler() http.Handler {
 		// render the HTML template
 		tmplData := struct {
 			Step         int
+			Title        string
 			AuthURL      string
 			SessionToken string
 		}{
 			Step:         1,
+			Title:        pkceTitle,
 			AuthURL:      authUrl,
 			SessionToken: state,
 		}
@@ -75,10 +78,12 @@ func pkceCallbackHandler() http.Handler {
 
 		tmplData := struct {
 			Step  int
+			Title string
 			State string
 			Code  string
 		}{
 			Step:  2,
+			Title: pkceTitle,
 			State: state,
 			Code:  session.Code,
 		}
@@ -121,6 +126,7 @@ func pkceTokenHandler() http.Handler {
 			// show the token request parameters
 			tmplData := struct {
 				Step         int
+				Title        string
 				Code         string
 				State        string
 				ClientID     string
@@ -129,6 +135,7 @@ func pkceTokenHandler() http.Handler {
 				CodeVerifier string
 			}{
 				Step:         3,
+				Title:        pkceTitle,
 				Code:         session.Code,
 				State:        sessionToken,
 				ClientID:     clientID,
@@ -165,11 +172,13 @@ func pkceTokenHandler() http.Handler {
 			// display token response
 			tmplData := struct {
 				Step          int
+				Title         string
 				TokenResponse string
 				SessionToken  string
 				Token         *TokenResponse
 			}{
 				Step:          4,
+				Title:         pkceTitle,
 				TokenResponse: string(tokenBytes),
 				SessionToken:  sessionToken,
 				Token:         token,
