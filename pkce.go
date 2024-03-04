@@ -13,15 +13,11 @@ func pkceHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// generate a code-verifier and code-challenge
 		codeVerifier, err := generateCodeVerifier()
-		if err != nil {
+		if err != nil || codeVerifier == "" {
 			http.Error(writer, "Failed to generate code verifier", http.StatusInternalServerError)
 			return
 		}
-		codeChallenge, err := generateCodeChallenge(codeVerifier)
-		if err != nil {
-			http.Error(writer, "Failed to generate code challenge", http.StatusInternalServerError)
-			return
-		}
+		codeChallenge := generateCodeChallenge(codeVerifier)
 
 		// create new session and state
 		state := generateRandomString(16)
@@ -197,8 +193,8 @@ func generateCodeVerifier() (string, error) {
 // https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
 // if available, the code_verfier must use SHA256.
 // code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
-func generateCodeChallenge(codeVerifier string) (string, error) {
+func generateCodeChallenge(codeVerifier string) string {
 	codeVerifierBytes := []byte(codeVerifier)
 	codeChallengeBytes := sha256.Sum256(codeVerifierBytes)
-	return base64.RawURLEncoding.EncodeToString(codeChallengeBytes[:]), nil
+	return base64.RawURLEncoding.EncodeToString(codeChallengeBytes[:])
 }

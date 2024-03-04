@@ -29,11 +29,12 @@ type TokenResponse struct {
 // - the raw token response as byte array
 // - the parsed token response with the standard fields
 // - an error if the exchange failed
-func exchangeAccessToken(clientId string, clientSecret string, code string, redirectUri string, tokenURI string, codeVerifier string) ([]byte, *TokenResponse, error) {
+func exchangeAccessToken(clientId, clientSecret, code, redirectUri, tokenURI, codeVerifier string) ([]byte, *TokenResponse, error) {
 
 	// create the request-payload
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
 	data.Set("client_id", clientId)
 	if clientSecret != "" {
 		// if clientSecret is provided, use the Authorization Code Grant
@@ -43,22 +44,9 @@ func exchangeAccessToken(clientId string, clientSecret string, code string, redi
 		// see RFC 7636 https://datatracker.ietf.org/doc/html/rfc7636#section-4.5
 		data.Set("code_verifier", codeVerifier)
 	}
-	data.Set("code", code)
 	data.Set("redirect_uri", redirectUri)
 
-	// create the request
-	req, err := http.NewRequest(http.MethodPost, tokenURI, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// we are sending the content as html-form
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.PostForm = data
-
-	// exchange the code for a token
-	client := http.DefaultClient
-	resp, err := client.Do(req)
+	resp, err := http.PostForm(tokenURI, data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,7 +60,7 @@ func exchangeAccessToken(clientId string, clientSecret string, code string, redi
 
 	// a 200 OK response status is expected. If not, return an error that contains the raw response body
 	if resp.StatusCode != http.StatusOK {
-		return rawBody, nil, fmt.Errorf("failed to exchange code for token: %s", rawBody)
+		return rawBody, nil, fmt.Errorf("failed to exchange code for token with status: %d and body: %s", resp.StatusCode, rawBody)
 	}
 
 	var parsedToken TokenResponse

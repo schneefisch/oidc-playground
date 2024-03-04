@@ -43,7 +43,7 @@
             <div class="col-12">
                 <h2>Step 2: Verify Code response and State Parameter</h2>
                 <p>You will be redirected to this authorization-URI:</p>
-                <div class="text-bg-light p-3 font-monospace">
+                <div class="text-bg-light p-3 font-monospace text-break">
                     State: {{ .State }}<br>
                     Code: {{ .Code }}<br>
                 </div>
@@ -62,7 +62,7 @@
             <div class="col-12">
                 <h2>Step 3: Exchange Token</h2>
                 <p>Use these parameters to exchagen the code for an access_token</p>
-                <div class="text-bg-light p-3 font-monospace">
+                <div class="text-bg-light p-3 font-monospace text-break">
                     POST: {{ .TokenURL }}<br>
                     Content-Type: application/x-www-form-urlencoded<br>
                     <br>
@@ -100,8 +100,8 @@
                        aria-expanded="false" aria-controls="rawToken">Show Raw Token</a>
                 </p>
                 <div class="collapse" id="rawToken">
-                    <div class="card card-body">
-                        <pre>{{ .TokenResponse }}</pre>
+                    <div class="card card-body font-monospace text-break">
+                        {{ .TokenResponse }}
                     </div>
                 </div>
             </div>
