@@ -1,27 +1,11 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
-)
-
-type AuthSession struct {
-	State        string
-	Code         string
-	AccessToken  string
-	IDToken      string
-	RefreshToken string
-}
-
-var (
-	sessions      = make(map[string]*AuthSession)
-	sessionsMutex sync.RWMutex
 )
 
 func authCodeHandler() http.Handler {
@@ -55,7 +39,7 @@ func authCodeHandler() http.Handler {
 				SessionToken: state,
 			}
 
-			writeTemplate(writer, "html/auth_code.html", tmplData)
+			writeTemplate(writer, "html/auth_code.gohtml", tmplData)
 			return
 		}
 
@@ -84,7 +68,7 @@ func authCodeHandler() http.Handler {
 			SessionToken: session.State,
 		}
 
-		writeTemplate(writer, "html/auth_code.html", tmplData)
+		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
 	})
 }
 
@@ -163,7 +147,7 @@ func tokenHandler() http.Handler {
 			Token:         parsedToken,
 		}
 
-		writeTemplate(writer, "html/auth_code.html", tmplData)
+		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
 	})
 }
 
@@ -229,16 +213,6 @@ func userinfoHandler() http.Handler {
 			SessionToken: session.State,
 		}
 
-		writeTemplate(writer, "html/auth_code.html", tmplData)
+		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
 	})
-
-}
-
-func generateRandomString(length int) string {
-	b := make([]byte, length)
-	_, err := rand.Read(b)
-	if err != nil {
-		return ""
-	}
-	return base64.URLEncoding.EncodeToString(b)
 }

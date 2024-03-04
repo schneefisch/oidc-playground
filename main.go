@@ -28,6 +28,8 @@ func run() {
 	http.Handle("POST /auth/code/token", tokenHandler())
 	http.Handle("POST /auth/code/userinfo", userinfoHandler())
 	http.Handle("GET /auth/pkce", pkceHandler())
+	http.Handle("GET /auth/pkce/callback", pkceCallbackHandler())
+	http.Handle("POST /auth/pkce/token", pkceTokenHandler())
 	http.Handle("GET /auth/implicit", implicitHandler())
 	http.Handle("GET /auth/device-code", deviceCodeHandler())
 	http.Handle("GET /auth/oidc", oidcHandler())
@@ -56,7 +58,7 @@ func homeHandler() http.Handler {
 		}
 		configMutex.Unlock()
 
-		writeTemplate(writer, "html/index.html", tmplData)
+		writeTemplate(writer, "html/index.gohtml", tmplData)
 	})
 }
 
@@ -67,7 +69,7 @@ func checkStartConfig() {
 	ClientID := os.Getenv("CLIENT_ID")
 	ClientSecret := os.Getenv("CLIENT_SECRET")
 
-	if AuthURI != "" && TokenURI != "" && ClientID != "" && ClientSecret != "" {
+	if AuthURI != "" && TokenURI != "" && ClientID != "" {
 		configMutex.Lock()
 		config.AuthorizationURI = AuthURI
 		config.TokenURI = TokenURI
@@ -94,12 +96,6 @@ func configHandler() http.Handler {
 
 		// redirect back to home-page after saving the configuration
 		http.Redirect(writer, request, "/", http.StatusSeeOther)
-	})
-}
-
-func pkceHandler() http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		http.Error(writer, "Not implemented", http.StatusNotImplemented)
 	})
 }
 
