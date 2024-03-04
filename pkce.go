@@ -9,10 +9,14 @@ import (
 	"net/url"
 )
 
+const (
+	codeVerifierLength = 44
+)
+
 func pkceHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// generate a code-verifier and code-challenge
-		codeVerifier, err := generateCodeVerifier()
+		codeVerifier, err := generateCodeVerifier(codeVerifierLength)
 		if err != nil || codeVerifier == "" {
 			http.Error(writer, "Failed to generate code verifier", http.StatusInternalServerError)
 			return
@@ -27,13 +31,16 @@ func pkceHandler() http.Handler {
 
 		// Build the authorization URL
 		configMutex.RLock()
-		authUrl := fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s&state=%s&code_challenge=%s&code_challenge_method=%s",
-			config.AuthorizationURI,
-			url.QueryEscape(config.ClientID),
-			url.QueryEscape("http://localhost:8080/auth/pkce/callback"),
-			url.QueryEscape(state),
-			url.QueryEscape(codeChallenge),
-			"S256")
+		params := url.Values{
+			"response_type":         {"code"},
+			"client_id":             {config.ClientID},
+			"redirect_uri":          {"http://localhost:8080/auth/pkce/callback"},
+			"state":                 {state},
+			"code_challenge":        {codeChallenge},
+			"code_challenge_method": {"S256"},
+			"scope":                 {"openid profile email"},
+		}
+		authUrl := fmt.Sprintf("%s?%s", config.AuthorizationURI, params.Encode())
 		configMutex.RUnlock()
 
 		// render the HTML template
@@ -78,7 +85,6 @@ func pkceCallbackHandler() http.Handler {
 
 		writeTemplate(writer, "html/pkce.gohtml", tmplData)
 	})
-
 }
 
 func pkceTokenHandler() http.Handler {
@@ -180,13 +186,22 @@ func pkceTokenHandler() http.Handler {
 // generateCodeVerifier creates a random string according to RVC 7336 PKCE, section 4.1
 // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
 // To ensure that only ASCII-characters are used, we use a RawURLEncoding of the random string
-func generateCodeVerifier() (string, error) {
-	codeVerifier := make([]byte, 64)
+// Allowing a maximum length of 128 characters and a min-length of 43 characters
+func generateCodeVerifier(length int) (string, error) {
+	// check min and max length according to RFC
+	if length > 128 || length < 43 {
+		return "", fmt.Errorf("codeVerifier length must be 43 <= length <= 128, got %d", length)
+	}
+	codeVerifier := make([]byte, 128)
 	_, err := rand.Read(codeVerifier)
 	if err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(codeVerifier), nil
+	encodedString := base64.RawURLEncoding.EncodeToString(codeVerifier)
+	if len(encodedString) > length {
+		encodedString = encodedString[:length]
+	}
+	return encodedString, nil
 }
 
 // generateCodeChallenge creates a code-challenge from the code-verifier according to RVC 7336 PKCE, section 4.2

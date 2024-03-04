@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,20 +36,40 @@ func exchangeAccessToken(clientId, clientSecret, code, redirectUri, tokenURI, co
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
-	data.Set("client_id", clientId)
-	if clientSecret != "" {
-		// if clientSecret is provided, use the Authorization Code Grant
-		data.Set("client_secret", clientSecret)
-	} else if codeVerifier != "" {
-		// No client-secret means, we have the PKCE flow and must use a code-challenge
-		// see RFC 7636 https://datatracker.ietf.org/doc/html/rfc7636#section-4.5
-		data.Set("code_verifier", codeVerifier)
-	}
 	data.Set("redirect_uri", redirectUri)
 
-	//fmt.Printf("sending data to tokenURI: %s\n%s", tokenURI, data)
+	// if clientSecret is provided, use the Authorization Code Grant
+	if clientSecret != "" {
+		data.Set("client_id", clientId)
+		data.Set("client_secret", clientSecret)
+	}
 
-	resp, err := http.PostForm(tokenURI, data)
+	// if codeVerifier is provided, use it for PKCE flow
+	if codeVerifier != "" {
+		data.Set("code_verifier", codeVerifier)
+	}
+
+	fmt.Printf("sending data to tokenURI: %s\n%s", tokenURI, data)
+
+	// create the request
+	req, err := http.NewRequest("POST", tokenURI, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// IBM AppID requires the clientID and codeVerifier to be sent in the Authorization header as "Basic" auth
+	if codeVerifier != "" {
+		// ToDo: this is a quite specific implementation for IBM AppID provider. This should be made configurable via Environment-Variables or checkbox
+		baseAuthHeader := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", clientId, codeVerifier)))
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", baseAuthHeader))
+	}
+
+	// set the post-data into the request
+	req.PostForm = data
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}

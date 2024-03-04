@@ -29,7 +29,7 @@
             <div class="col-12">
                 <h2>Step 1: Authorization Request</h2>
                 <p>You will be redirected to this authorization-URI:</p>
-                <div class="text-bg-light p-3 font-monospace">
+                <div class="text-bg-light p-3 font-monospace text-break">
                     {{ .AuthURL }}
                 </div>
                 <p>Click the button below to start the authorization process.</p>
@@ -61,16 +61,16 @@
         <div class="row gy-3 mt-3">
             <div class="col-12">
                 <h2>Step 3: Exchange Token</h2>
-                <p>Use these parameters to exchagen the code for an access_token</p>
+                <p>Use these parameters to exchange the code for an access_token</p>
                 <div class="text-bg-light p-3 font-monospace text-break">
                     POST: {{ .TokenURL }}<br>
                     Content-Type: application/x-www-form-urlencoded<br>
+                    Authorization: Basic {{ .ClientID }}:{{ .CodeVerifier }}
                     <br>
                     grant_type: authorization_code<br>
-                    client_id: {{ .ClientID }}<br>
                     code: {{ .Code }}<br>
                     redirect_uri: {{ .RedirectURL }}<br>
-                    code_verifier: {{ .CodeVerifier }}<br>
+                    code_verifier: {{ .CodeVerifier }}
                 </div>
 
                 <form action="/auth/pkce/token" method="post">

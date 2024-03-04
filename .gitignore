@@ -28,3 +28,4 @@ go.work
 
 # secret files
 /secret.properties
+/http-client.env.json
