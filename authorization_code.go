@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,8 +12,11 @@ import (
 )
 
 type AuthSession struct {
-	State string
-	Code  string
+	State        string
+	Code         string
+	AccessToken  string
+	IDToken      string
+	RefreshToken string
 }
 
 var (
@@ -84,6 +88,15 @@ func authCodeHandler() http.Handler {
 	})
 }
 
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	IDToken      string `json:"id_token,omitempty"`
+	Scope        string `json:"scope,omitempty"`
+}
+
 func tokenHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if err := request.ParseForm(); err != nil {
@@ -129,17 +142,96 @@ func tokenHandler() http.Handler {
 			return
 		}
 
+		parsedToken, _ := parseTokenResponse(tokenResponse)
+
+		sessionsMutex.Lock()
+		session.IDToken = parsedToken.IDToken
+		session.AccessToken = parsedToken.AccessToken
+		session.RefreshToken = parsedToken.RefreshToken
+		sessionsMutex.Unlock()
+
 		// display the token response
 		tmplData := struct {
 			Step          int
 			TokenResponse string
+			SessionToken  string
+			Token         *TokenResponse
 		}{
 			Step:          3,
 			TokenResponse: string(tokenResponse),
+			SessionToken:  session.State,
+			Token:         parsedToken,
 		}
 
 		writeTemplate(writer, "html/auth_code.html", tmplData)
 	})
+}
+
+func parseTokenResponse(response []byte) (*TokenResponse, error) {
+	token := &TokenResponse{}
+	if err := json.Unmarshal(response, token); err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+func userinfoHandler() http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		sessionToken := request.PostFormValue("session_token")
+		sessionsMutex.RLock()
+		session, exists := sessions[sessionToken]
+		sessionsMutex.RUnlock()
+
+		if !exists || session.Code == "" {
+			http.Error(writer, fmt.Sprintf("Invalid session token '%s' or code not found", sessionToken), http.StatusBadRequest)
+			return
+		}
+
+		configMutex.RLock()
+		userinfoURI := config.UserinfoURI
+		configMutex.RUnlock()
+
+		request, err := http.NewRequest("GET", userinfoURI, nil)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// add the authorization
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", session.AccessToken))
+
+		// execute the userinfo request
+		resp, err := http.DefaultClient.Do(request)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// read the response body
+		userinfo, err := io.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		tmplData := struct {
+			Step         int
+			Userinfo     string
+			SessionToken string
+		}{
+			Step:         4,
+			Userinfo:     string(userinfo),
+			SessionToken: session.State,
+		}
+
+		writeTemplate(writer, "html/auth_code.html", tmplData)
+	})
+
 }
 
 func generateRandomString(length int) string {

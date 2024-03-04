@@ -26,6 +26,7 @@ func run() {
 	http.Handle("POST /config", configHandler())
 	http.Handle("GET /auth/code", authCodeHandler())
 	http.Handle("POST /auth/code/token", tokenHandler())
+	http.Handle("POST /auth/code/userinfo", userinfoHandler())
 	http.Handle("GET /auth/pkce", pkceHandler())
 	http.Handle("GET /auth/implicit", implicitHandler())
 	http.Handle("GET /auth/device-code", deviceCodeHandler())

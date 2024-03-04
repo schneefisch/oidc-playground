@@ -60,8 +60,33 @@
             <div class="text-bg-light p-3 font-monospace text-break">
                 Access Token: {{ .TokenResponse }}
             </div>
+            <p>Parsed access-token:</p>
+            <div class="text-bg-light p-3 font-monospace text-break">
+                Access-Token: {{ .Token.AccessToken }}<br>
+                Token-Type: {{ .Token.TokenType }}<br>
+                Expires-In: {{ .Token.ExpiresIn }}<br>
+                Refresh-Token: {{ .Token.RefreshToken }}<br>
+                Scope: {{ .Token.Scope }}<br>
+                ID-Token: {{ .Token.IDToken }}
+            </div>
+
+            <form action="/auth/code/userinfo" method="post">
+                <input type="hidden" name="session_token" value="{{ .SessionToken }}">
+                <input type="submit" class="btn btn-primary" value="Get Userinfo">
+            </form>
         </div>
     </div>
+    {{ end }}
+
+    {{ if eq .Step 4 }}
+    <div class="row gy-3 mt-3">
+        <div class="col-12">
+            <h4>Step 4: Userinfo</h4>
+            <p>Raw userinfo JWT</p>
+            <div class="text-bg-light p-3 font-monospace text-break">
+                Userinfo: {{ .Userinfo }}
+            </div>
+        </div>
     {{ end }}
 </div>
 </body>
