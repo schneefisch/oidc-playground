@@ -46,6 +46,8 @@ func exchangeAccessToken(clientId, clientSecret, code, redirectUri, tokenURI, co
 	}
 	data.Set("redirect_uri", redirectUri)
 
+	//fmt.Printf("sending data to tokenURI: %s\n%s", tokenURI, data)
+
 	resp, err := http.PostForm(tokenURI, data)
 	if err != nil {
 		return nil, nil, err
