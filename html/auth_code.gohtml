@@ -58,9 +58,6 @@
     <div class="row gy-3 mt-3">
         <div class="col-12">
             <h4>Step 3: Access-Token</h4>
-            <div class="text-bg-light p-3 font-monospace text-break">
-                Access Token: {{ .TokenResponse }}
-            </div>
             <p>Parsed access-token:</p>
             <div class="text-bg-light p-3 font-monospace text-break">
                 Access-Token: {{ .Token.AccessToken }}<br>
@@ -69,6 +66,16 @@
                 Refresh-Token: {{ .Token.RefreshToken }}<br>
                 Scope: {{ .Token.Scope }}<br>
                 ID-Token: {{ .Token.IDToken }}
+            </div>
+
+            <p class="d-inline-flex gap-1">
+                <a class="btn btn-secondary" data-bs-toggle="collapse" href="#rawToken" role="button"
+                   aria-expanded="false" aria-controls="rawToken">Show Raw Token</a>
+            </p>
+            <div class="collapse" id="rawToken">
+                <div class="card card-body font-monospace text-break">
+                    {{ .TokenResponse }}
+                </div>
             </div>
 
             <form action="/auth/code/userinfo" method="post">

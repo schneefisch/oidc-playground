@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type TokenResponse struct {
@@ -52,7 +53,7 @@ func exchangeAccessToken(clientId, clientSecret, code, redirectUri, tokenURI, co
 	fmt.Printf("sending data to tokenURI: %s\n%s", tokenURI, data)
 
 	// create the request
-	req, err := http.NewRequest("POST", tokenURI, nil)
+	req, err := http.NewRequest("POST", tokenURI, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,9 +65,6 @@ func exchangeAccessToken(clientId, clientSecret, code, redirectUri, tokenURI, co
 		baseAuthHeader := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", clientId, codeVerifier)))
 		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", baseAuthHeader))
 	}
-
-	// set the post-data into the request
-	req.PostForm = data
 
 	client := http.DefaultClient
 	resp, err := client.Do(req)
