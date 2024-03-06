@@ -2,6 +2,10 @@
 
 This is a small golang application, that can be run either locally by running
 
+![choose_flow.png](img/choose_flow.png)
+
+![code_response.png](img/code_response.png)
+
 ## How to use
 
 ```sh
