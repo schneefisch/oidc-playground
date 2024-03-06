@@ -1,39 +1,50 @@
 {{ define "content" }}
 <div class="row gy-3 mt-3">
     <div class="col-8">
-        <p>Choose your flow</p>
-        <a type="button" role="button" class="btn btn-outline-primary" href="/auth/code">Authorization Code</a>
-        <a type="button" role="button" class="btn btn-outline-primary" href="/auth/pkce">PKCE</a>
-        <a type="button" role="button" class="btn btn-outline-secondary disabled" href="/auth/implicit">Implicit</a>
+        <p>
+            This application provides debugging features for OAuth/OIDC flows<br>
+            It will show secrets and tokens in the frontend, so do not use it in production!
+        </p>
+        <p>Read more about <a href="https://www.oauth.com/">OAuth</a></p>
+        <p>Choose your flow:</p>
+        <a type="button" role="button" class="btn btn-outline-primary" href="/auth/code"
+           data-bs-toggle="tooltip" data-bs-title="Authorization code flow used if you have a trusted server/application that can keep a secret" >Authorization Code</a>
+        <a type="button" role="button" class="btn btn-outline-primary" href="/auth/pkce"
+           data-bs-toggle="tooltip" data-bs-title="PKCE flow is used for untrusted clients, like single-page applications or phone-applications that you do not want to trust with a client-secret">PKCE</a>
+        <a type="button" role="button" class="btn btn-outline-secondary disabled" href="/auth/implicit"
+           data-bs-toggle="tooltip" data-bs-title="The implicity flow is not recommended due to security reasons">Implicit Grant</a>
+        <a type="button" role="button" class="btn btn-outline-secondary disabled" href="/auth/implicit"
+           data-bs-toggle="tooltip" data-bs-title="The user-password flow is not recommended due to security reasons">Password Grant</a>
         <a type="button" role="button" class="btn btn-outline-secondary disabled" href="/auth/device">Device Code</a>
         <a type="button" role="button" class="btn btn-outline-secondary disabled" href="/auth/oidc">OIDC</a>
     </div>
-    <div class="col-4">
-        {{ if .Configured }}
-        <h2>Configured</h2>
+    <div class="col-4 p-3 bg-info bg-opacity-10 border border-info rounded">
+        <h2>Configuration</h2>
         <p>Authorization URI: {{ .Config.AuthorizationURI }}</p>
         <p>Token URI: {{ .Config.TokenURI }}</p>
         <p>Userinfo URI: {{ .Config.UserinfoURI }}</p>
         <p>Client ID: {{ .Config.ClientID }}</p>
-        {{ else }}
+        <hr>
         <form action="/config" method="post">
             <label for="authorization_uri" class="form-label">Authorization URI:</label><br>
             <input type="text" class="form-control" id="authorization_uri" name="authorization_uri"
-                   placeholder="https://example.com/oauth2/authorize"><br>
+                   placeholder="https://example.com/oauth2/authorize" value="{{ .Config.AuthorizationURI }}"><br>
             <label for="token_uri" class="form-label">Token URI:</label><br>
             <input type="text" class="form-control" id="token_uri" name="token_uri"
-                   placeholder="https://example.com/oauth2/token"><br>
+                   placeholder="https://example.com/oauth2/token" value="{{ .Config.TokenURI }}"><br>
             <label for="userinfo_uri" class="form-label">Userinfo URI (optional):</label><br>
             <input type="text" class="form-control" id="userinfo_uri" name="userinfo_uri"
-                   placeholder="https://example.com/oidc/userinfo"><br>
+                   placeholder="https://example.com/oidc/userinfo" value="{{ .Config.UserinfoURI }}"><br>
             <label for="client_id" class="form-label">Client ID:</label><br>
-            <input type="text" class="form-control" id="client_id" name="client_id" placeholder="client_id"><br>
+            <input type="text" class="form-control" id="client_id" name="client_id" placeholder="client_id" value="{{ .Config.ClientID }}"><br>
             <label for="client_secret" class="form-label">Client Secret (Required for Authorization Code flow, optional for PKCE):</label><br>
-            <input type="password" class="form-control" id="client_secret" name="client_secret"
-                   placeholder="client_secret"><br>
+            <input type="password" class="form-control" id="client_secret" name="client_secret"><br>
             <input type="submit" class="btn btn-primary" value="Submit">
         </form>
-        {{ end }}
     </div>
 </div>
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
 {{ end }}

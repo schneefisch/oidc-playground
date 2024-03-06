@@ -13,7 +13,11 @@ func ConfigHandler() http.Handler {
 		config.TokenURI = request.PostFormValue("token_uri")
 		config.UserinfoURI = request.PostFormValue("userinfo_uri")
 		config.ClientID = request.PostFormValue("client_id")
-		config.ClientSecret = request.PostFormValue("client_secret")
+		secret := request.PostFormValue("client_secret")
+		// only override secret if it's not empty
+		if secret != "" {
+			config.ClientSecret = request.PostFormValue("client_secret")
+		}
 		configMutex.Unlock()
 
 		// redirect back to home-page after saving the configuration
