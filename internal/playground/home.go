@@ -16,7 +16,7 @@ func HomeHandler() http.Handler {
 			Config     Config
 		}{
 			Title:      "OAuth 2.0 Playground",
-			Configured: config.ClientID != "" && config.ClientSecret != "",
+			Configured: config.ClientID != "",
 			Config:     config,
 		}
 		configMutex.Unlock()
