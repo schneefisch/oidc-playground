@@ -5,7 +5,7 @@ This is a small golang application, that can be run either locally by running
 ## How to use
 
 ```sh
-go build main.go
+go build cmd/main.go
 ./main
 ```
 
@@ -32,4 +32,4 @@ with your Provider.
 
 ## Features
 
-Currently, only the Authorization-Code Grant is supported with the addition of requesting the userinfo endpoint.
+Currently, only the Authorization-Code and PKCE Grant are supported with the addition of requesting the userinfo endpoint.
