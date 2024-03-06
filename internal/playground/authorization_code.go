@@ -1,4 +1,4 @@
-package main
+package playground
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ const (
 	authCodeTitle = "OAuth 2.0 Playground - Authorization Code Flow"
 )
 
-func authCodeHandler() http.Handler {
+func AuthCodeHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		state := request.URL.Query().Get("state")
 		if state == "" {
@@ -49,7 +49,7 @@ func authCodeHandler() http.Handler {
 				SessionToken: state,
 			}
 
-			writeTemplate(writer, "html/auth_code.gohtml", tmplData)
+			writeTemplate(writer, "templates/auth_code.gohtml", tmplData)
 			return
 		}
 
@@ -82,11 +82,11 @@ func authCodeHandler() http.Handler {
 			SessionToken: session.State,
 		}
 
-		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
+		writeTemplate(writer, "templates/auth_code.gohtml", tmplData)
 	})
 }
 
-func tokenHandler() http.Handler {
+func TokenHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if err := request.ParseForm(); err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
@@ -141,11 +141,11 @@ func tokenHandler() http.Handler {
 			Token:         parsedToken,
 		}
 
-		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
+		writeTemplate(writer, "templates/auth_code.gohtml", tmplData)
 	})
 }
 
-func userinfoHandler() http.Handler {
+func UserinfoHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if err := request.ParseForm(); err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
@@ -201,6 +201,6 @@ func userinfoHandler() http.Handler {
 			SessionToken: session.State,
 		}
 
-		writeTemplate(writer, "html/auth_code.gohtml", tmplData)
+		writeTemplate(writer, "templates/auth_code.gohtml", tmplData)
 	})
 }

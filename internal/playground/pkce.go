@@ -1,4 +1,4 @@
-package main
+package playground
 
 import (
 	"crypto/rand"
@@ -14,7 +14,7 @@ const (
 	pkceTitle          = "OAuth 2.0 Playground - PKCE Flow"
 )
 
-func pkceHandler() http.Handler {
+func PkceHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// generate a code-verifier and code-challenge
 		codeVerifier, err := generateCodeVerifier(codeVerifierLength)
@@ -56,11 +56,11 @@ func pkceHandler() http.Handler {
 			AuthURL:      authUrl,
 			SessionToken: state,
 		}
-		writeTemplate(writer, "html/pkce.gohtml", tmplData)
+		writeTemplate(writer, "templates/pkce.gohtml", tmplData)
 	})
 }
 
-func pkceCallbackHandler() http.Handler {
+func PkceCallbackHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// handle callback with the authorization code and state
 		state := request.URL.Query().Get("state")
@@ -88,11 +88,11 @@ func pkceCallbackHandler() http.Handler {
 			Code:  session.Code,
 		}
 
-		writeTemplate(writer, "html/pkce.gohtml", tmplData)
+		writeTemplate(writer, "templates/pkce.gohtml", tmplData)
 	})
 }
 
-func pkceTokenHandler() http.Handler {
+func PkceTokenHandler() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		fmt.Println("PKCE Token Handler")
 
@@ -145,7 +145,7 @@ func pkceTokenHandler() http.Handler {
 			}
 
 			fmt.Println("Showing PKCE Step 2")
-			writeTemplate(writer, "html/pkce.gohtml", tmplData)
+			writeTemplate(writer, "templates/pkce.gohtml", tmplData)
 			return
 
 		case "3":
@@ -185,7 +185,7 @@ func pkceTokenHandler() http.Handler {
 			}
 
 			fmt.Println("Showing PKCE Step 3")
-			writeTemplate(writer, "html/pkce.gohtml", tmplData)
+			writeTemplate(writer, "templates/pkce.gohtml", tmplData)
 			return
 		}
 

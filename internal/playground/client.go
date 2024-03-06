@@ -1,4 +1,4 @@
-package main
+package playground
 
 import (
 	"encoding/base64"
